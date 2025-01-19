@@ -12,12 +12,15 @@
 #include <ESPmDNS.h> 
 //#include <ESPAsyncWebServer.h>
 #include <WebServer.h>
-
+#include <WebSocketsServer.h>
+#include <index.h> 
 #define ESP_DRD_USE_SPIFFS true 
 #define JSON_CONFIG_FILE "/router_results.json" // JSON FILE FOR SERIALIZATIONS/DESERIAAIN 
 bool shouldSaveConfig = false; // FLAG FOR SAVING DATA 
+
 WiFiManager wm;
 WebServer server(80);
+WebSocketsServer webSocket = WebSocketsServer(80);
 
 char cRouterMac[50];
 char cRouterIP[50];
@@ -95,8 +98,13 @@ void setup() {
         delay(2000);
         server.on("/", []() {
           server.send(200, "text\html", webpage);
+          
         });
         server.begin(); 
+        delay(2000); 
+        webSocket.begin();
+        webSocket.onEvent(onWebSocketEvent);
+        
 
 
         delay(2000);
@@ -116,6 +124,45 @@ void setup() {
   }
 }
     
+void onWebSocketEvent(uint8_t num,
+                      WStype_t type,
+                      uint8_t * payload,
+                      size_t length) {
+
+  // Figure out the type of WebSocket event
+  switch(type) {
+
+    // Client has disconnected
+    case WStype_DISCONNECTED:
+      Serial.printf("[%u] Disconnected!\n", num);
+      break;
+
+    // New client has connected
+    case WStype_CONNECTED:
+      {
+        IPAddress ip = webSocket.remoteIP(num);
+        Serial.printf("[%u] Connection from ", num);
+        Serial.println(ip.toString());
+      }
+      break;
+
+    // Echo text message back to client
+    case WStype_TEXT:
+      Serial.printf("[%u] Text: %s\n", num, payload);
+      webSocket.sendTXT(num, payload);
+      break;
+
+    // For everything else: do nothing
+    case WStype_BIN:
+    case WStype_ERROR:
+    case WStype_FRAGMENT_TEXT_START:
+    case WStype_FRAGMENT_BIN_START:
+    case WStype_FRAGMENT:
+    case WStype_FRAGMENT_FIN:
+    default:
+      break;
+  }
+}
 
 void processWiFiInfo(String RouterMac, String RouterIP, String subnetmask, String clientIP, String dnsIP, String ssid, String mac1) {
     Serial.println("WiFi Information:");
@@ -245,20 +292,21 @@ void configModeCallback(WiFiManager *myWiFiManager)
   Serial.println(WiFi.softAPIP());
 }
 void loop() {
-  delay(60000); // Update every 30 seconds
-  //printARPTable();
-          processWiFiInfo(
-          String(WiFi.softAPmacAddress()),
-          String(WiFi.gatewayIP().toString()),
-          String(WiFi.subnetMask().toString()),
-          String(WiFi.localIP().toString()),
-          String(WiFi.dnsIP().toString()),
-          String(WiFi.SSID()),
-          String(WiFi.macAddress())
-      );
+  // delay(60000); // Update every 30 seconds
+  // //printARPTable();
+  //         processWiFiInfo(
+  //         String(WiFi.softAPmacAddress()),
+  //         String(WiFi.gatewayIP().toString()),
+  //         String(WiFi.subnetMask().toString()),
+  //         String(WiFi.localIP().toString()),
+  //         String(WiFi.dnsIP().toString()),
+  //         String(WiFi.SSID()),
+  //         String(WiFi.macAddress())
+  //     );
 
       server.handleClient();
-  
+      webSocket.loop();
+
 }
 
 // void printARPTable() {
