@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chatbot</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f9f9f9;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+        }
+        .chat-container {
+            width: 90%;
+            max-width: 400px;
+            border: 1px solid #ccc;
+            border-radius: 10px;
+            background-color: #fff;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+        .messages {
+            padding: 10px;
+            height: 300px;
+            overflow-y: auto;
+            border-bottom: 1px solid #ddd;
+        }
+        .messages div {
+            margin-bottom: 10px;
+        }
+        .controls {
+            display: flex;
+            padding: 10px;
+            gap: 10px;
+        }
+        input {
+            flex-grow: 1;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        button {
+            padding: 8px 15px;
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+<div class="chat-container">
+    <div class="messages" id="messages"></div>
+    <div class="controls">
+        <input type="text" id="input" placeholder="Type a message...">
+        <button id="send">Send</button>
+    </div>
+</div>
+
+<script>
+    // Initialize WebSocket connection
+    const socket = new WebSocket('wss://your-websocket-server');
+
+    // Select elements
+    const messagesDiv = document.getElementById('messages');
+    const inputField = document.getElementById('input');
+    const sendButton = document.getElementById('send');
+
+    // Handle incoming messages
+    socket.onmessage = (event) => {
+        const message = document.createElement('div');
+        message.textContent = `Server: ${event.data}`;
+        messagesDiv.appendChild(message);
+        messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    };
+
+    // Send message on button click
+    sendButton.onclick = () => {
+        const message = inputField.value;
+        if (message) {
+            socket.send(message);
+            const userMessage = document.createElement('div');
+            userMessage.textContent = `You: ${message}`;
+            messagesDiv.appendChild(userMessage);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+            inputField.value = '';
+        }
+    };
+
+    // Send predefined message with querySelector example
+    document.querySelector('button').onclick = () => {
+        socket.send('[?] bye');
+        const goodbyeMessage = document.createElement('div');
+        goodbyeMessage.textContent = `You: [?] bye`;
+        messagesDiv.appendChild(goodbyeMessage);
+        messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    };
+</script>
+</body>
+</html>
