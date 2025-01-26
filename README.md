@@ -1,5 +1,3 @@
-Here’s a README.md for your project:
-
 WiFiManager & WebSocket-based Router Information Display
 
 This project is an ESP32-based Wi-Fi manager and web server that captures and displays router information, such as router MAC address, IP address, subnet mask, DNS IP, and connected client IP. It includes functionality to connect to a Wi-Fi network, display router info in a webpage, and send the info over WebSockets to a connected client.
